@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { getUserActivities, deleteActivity, Activity as ActivityType } from '@/services/activityService';
@@ -64,6 +63,23 @@ export default function HistoryPage() {
   // Get unique activity types for filter tabs
   const activityTypes = ['all', ...Array.from(new Set(activities.map(a => a.activity_type.toLowerCase())))];
 
+  // Map emojis to activity types
+  const getEmojiForType = (type: string) => {
+    const emojiMap: Record<string, string> = {
+      'all': '🔍',
+      'water': '💧',
+      'food': '🍽️',
+      'sleep': '😴',
+      'exercise': '🏋️',
+      'meditation': '🧘',
+      'mood': '😊',
+      'symptom': '🤒',
+      'medication': '💊'
+    };
+    
+    return emojiMap[type.toLowerCase()] || '📝';
+  };
+
   // Group activities by date
   const groupedActivities: Record<string, ActivityType[]> = {};
   filteredActivities.forEach(activity => {
@@ -99,7 +115,7 @@ export default function HistoryPage() {
               value={type} 
               className="capitalize whitespace-nowrap"
             >
-              {type === 'all' ? 'All Activities' : type}
+              {getEmojiForType(type)} {type === 'all' ? 'All Activities' : type}
             </TabsTrigger>
           ))}
         </TabsList>
