@@ -65,7 +65,7 @@ export default function ActivityPage() {
           <div className="grid grid-cols-2 gap-3">
             {Object.keys(todaysCount).length > 0 ? (
               Object.entries(todaysCount).map(([activityName, count]) => (
-                <div key={activityName} className="flex items-center gap-2">
+                <div key={activityName} className="flex items-center gap-2 p-2 rounded-lg border border-border/30">
                   <span className="text-xl">
                     {activities.find(a => a.name === activityName)?.emoji || '📝'}
                   </span>

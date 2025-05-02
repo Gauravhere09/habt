@@ -8,17 +8,21 @@ import { toast } from 'sonner';
 import { StickyNote } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 export default function HistoryPage() {
   const [activities, setActivities] = useState<ActivityType[]>([]);
+  const [filteredActivities, setFilteredActivities] = useState<ActivityType[]>([]);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [activeFilter, setActiveFilter] = useState('all');
   const navigate = useNavigate();
   const { user } = useAuth();
 
   const loadActivities = async () => {
     const data = await getUserActivities();
     setActivities(data);
+    setFilteredActivities(data);
   };
 
   useEffect(() => {
@@ -46,9 +50,23 @@ export default function HistoryPage() {
     navigate('/notes');
   };
 
+  const handleFilterChange = (value: string) => {
+    setActiveFilter(value);
+    
+    if (value === 'all') {
+      setFilteredActivities(activities);
+    } else {
+      const filtered = activities.filter(activity => activity.activity_type.toLowerCase() === value.toLowerCase());
+      setFilteredActivities(filtered);
+    }
+  };
+
+  // Get unique activity types for filter tabs
+  const activityTypes = ['all', ...Array.from(new Set(activities.map(a => a.activity_type.toLowerCase())))];
+
   // Group activities by date
   const groupedActivities: Record<string, ActivityType[]> = {};
-  activities.forEach(activity => {
+  filteredActivities.forEach(activity => {
     const date = new Date(activity.created_at).toLocaleDateString();
     if (!groupedActivities[date]) {
       groupedActivities[date] = [];
@@ -72,6 +90,20 @@ export default function HistoryPage() {
           </Button>
         )}
       </div>
+      
+      <Tabs value={activeFilter} onValueChange={handleFilterChange} className="w-full">
+        <TabsList className="w-full overflow-x-auto flex flex-nowrap mb-4 pb-1" style={{ scrollbarWidth: 'none' }}>
+          {activityTypes.map((type) => (
+            <TabsTrigger 
+              key={type} 
+              value={type} 
+              className="capitalize whitespace-nowrap"
+            >
+              {type === 'all' ? 'All Activities' : type}
+            </TabsTrigger>
+          ))}
+        </TabsList>
+      </Tabs>
       
       {Object.keys(groupedActivities).length > 0 ? (
         Object.entries(groupedActivities).map(([date, dayActivities]) => (
@@ -114,7 +146,9 @@ export default function HistoryPage() {
       ) : (
         <Card>
           <CardContent className="p-6 text-center">
-            <p className="text-muted-foreground">No activity recorded yet.</p>
+            <p className="text-muted-foreground">
+              {activeFilter === 'all' ? 'No activity recorded yet.' : `No ${activeFilter} activities found.`}
+            </p>
           </CardContent>
         </Card>
       )}

@@ -83,17 +83,42 @@ export default function ChatPage() {
     try {
       // Fetch user activities for context
       const activities = await getUserActivities();
-      const recentActivities = activities.slice(0, 10);
+      const recentActivities = activities.slice(0, 20); // Increased from 10 to 20 for better context
       
-      // Format recent activities for the AI
+      // Format recent activities for the AI with more detail
       const activitiesContext = recentActivities.length > 0 
         ? `Recent activities: ${recentActivities.map(a => 
             `${a.emoji} ${a.activity_type}${a.value ? ` (${a.value})` : ''} at ${new Date(a.created_at).toLocaleString()}`
           ).join(', ')}`
         : 'No recent activities tracked.';
       
-      // Send message to Gemini AI - now hardcoded API key
-      const prompt = `User's question: ${input}\n\nContext: ${activitiesContext}\n\nPlease provide a helpful response as a wellness assistant.`;
+      // Activity counts for better insights
+      const activityCounts: Record<string, number> = {};
+      const activityValues: Record<string, number[]> = {};
+      
+      activities.forEach(activity => {
+        if (!activityCounts[activity.activity_type]) {
+          activityCounts[activity.activity_type] = 0;
+          activityValues[activity.activity_type] = [];
+        }
+        activityCounts[activity.activity_type]++;
+        if (activity.value && !isNaN(parseFloat(activity.value))) {
+          activityValues[activity.activity_type].push(parseFloat(activity.value));
+        }
+      });
+      
+      // Activity statistics for better insights
+      const activityStats = Object.entries(activityCounts)
+        .map(([type, count]) => {
+          const values = activityValues[type];
+          const avgValue = values.length > 0 
+            ? (values.reduce((sum, val) => sum + val, 0) / values.length).toFixed(1) 
+            : null;
+          return `${type}: ${count} times${avgValue ? `, avg ${avgValue}` : ''}`;
+        }).join('; ');
+      
+      // Send message to Gemini AI with enhanced context
+      const prompt = `User's question: ${input}\n\nContext: ${activitiesContext}\n\nActivity Statistics: ${activityStats}\n\nPlease provide a helpful response as a wellness assistant based on this data.`;
       const aiResponseText = await getAIResponse(prompt);
       
       // Add AI response to chat

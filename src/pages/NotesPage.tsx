@@ -105,6 +105,16 @@ export default function NotesPage() {
     <div className="space-y-6">
       <h2 className="text-2xl font-bold text-center mb-6">Notes</h2>
       
+      <div className="flex space-x-2 mb-6">
+        <Input
+          placeholder="Search notes..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          onKeyPress={e => e.key === 'Enter' && handleSearch()}
+        />
+        <Button onClick={handleSearch}>Search</Button>
+      </div>
+      
       <Card className="bg-card/50 border-border/50">
         <CardHeader>
           <CardTitle>{editingNote ? 'Edit Note' : 'Create Note'}</CardTitle>
@@ -137,16 +147,6 @@ export default function NotesPage() {
           </form>
         </CardContent>
       </Card>
-      
-      <div className="flex space-x-2">
-        <Input
-          placeholder="Search notes..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          onKeyPress={e => e.key === 'Enter' && handleSearch()}
-        />
-        <Button onClick={handleSearch}>Search</Button>
-      </div>
       
       <div className="space-y-4">
         {notes.length === 0 ? (

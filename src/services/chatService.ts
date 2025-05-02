@@ -115,7 +115,7 @@ export async function getAIResponse(message: string): Promise<string> {
   try {
     const key = getGeminiApiKey();
     
-    // Make a request to Gemini API
+    // Updated URL for Gemini Flash model
     const response = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=' + key, {
       method: 'POST',
       headers: {
