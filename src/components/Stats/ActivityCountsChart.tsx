@@ -1,22 +1,30 @@
 
-import { ChartContainer } from '@/components/ui/chart';
+import { ChartContainer, ChartConfig } from '@/components/ui/chart';
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Cell, Tooltip } from 'recharts';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-
-interface ChartConfigItem {
-  label?: React.ReactNode;
-  icon?: React.ComponentType;
-  color?: string;
-  theme?: Record<string, string>;
-}
+import { ReactNode } from 'react';
 
 interface ActivityCountsChartProps {
   data: any[];
-  chartConfig: Record<string, ChartConfigItem>;
+  chartConfig: Record<string, {
+    label?: ReactNode;
+    icon?: React.ComponentType;
+    color?: string;
+  }>;
   isEmpty: boolean;
 }
 
 export default function ActivityCountsChart({ data, chartConfig, isEmpty }: ActivityCountsChartProps) {
+  // Convert our simpler chartConfig to the format expected by ChartContainer
+  const convertedConfig: ChartConfig = Object.entries(chartConfig).reduce((acc, [key, value]) => {
+    acc[key] = {
+      label: value.label,
+      icon: value.icon,
+      color: value.color
+    };
+    return acc;
+  }, {} as ChartConfig);
+
   return (
     <Card className="bg-card/50 border-border/50 overflow-hidden">
       <CardHeader className="pb-1">
@@ -25,7 +33,7 @@ export default function ActivityCountsChart({ data, chartConfig, isEmpty }: Acti
       <CardContent className="px-1 pt-1 pb-2">
         {!isEmpty ? (
           <ChartContainer
-            config={chartConfig}
+            config={convertedConfig}
             className="h-[180px]"
           >
             <ResponsiveContainer width="100%" height="100%">
@@ -54,7 +62,7 @@ export default function ActivityCountsChart({ data, chartConfig, isEmpty }: Acti
                 <Bar dataKey="count" radius={[4, 4, 0, 0]}>
                   {data.map((entry, index) => {
                     const configValues = Object.values(chartConfig);
-                    const configItem = configValues[index % configValues.length] as ChartConfigItem;
+                    const configItem = configValues[index % configValues.length];
                     return (
                       <Cell 
                         key={`cell-${index}`}
