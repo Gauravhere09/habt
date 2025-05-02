@@ -7,13 +7,6 @@ export interface Activity {
   description?: string;
 }
 
-export interface ActivityEntry {
-  id: string;
-  activityId: string;
-  timestamp: string; // ISO string
-  note?: string;
-}
-
 export const defaultActivities: Activity[] = [
   {
     id: 'poop',

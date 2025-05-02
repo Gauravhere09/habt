@@ -1,6 +1,6 @@
 
 import { Link, useLocation } from 'react-router-dom';
-import { Home, History, BarChart2, MessageSquare, Settings } from 'lucide-react';
+import { Home, History, BarChart2, MessageSquare } from 'lucide-react';
 
 export default function NavBar() {
   const location = useLocation();
@@ -10,11 +10,10 @@ export default function NavBar() {
     { path: '/history', icon: History, label: 'History' },
     { path: '/stats', icon: BarChart2, label: 'Stats' },
     { path: '/chat', icon: MessageSquare, label: 'Chat' },
-    { path: '/settings', icon: Settings, label: 'Settings' },
   ];
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 bg-card border-t border-border/30">
+    <nav className="fixed bottom-2 left-2 right-2 bg-card border border-border/30 rounded-lg shadow-lg">
       <div className="flex justify-around p-2">
         {navItems.map((item) => {
           const isActive = location.pathname === item.path;

@@ -6,7 +6,7 @@ import { Toaster } from '@/components/ui/sonner';
 
 export default function AppLayout() {
   return (
-    <div className="flex flex-col min-h-screen bg-background text-foreground pb-16">
+    <div className="flex flex-col min-h-screen bg-background text-foreground pb-20">
       <Header />
       <main className="flex-1 p-4 overflow-auto">
         <Outlet />
