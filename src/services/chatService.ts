@@ -111,9 +111,9 @@ export async function deleteAllChatMessages(): Promise<boolean> {
 }
 
 // Send a message to Gemini AI and get a response
-export async function getAIResponse(message: string, apiKey?: string): Promise<string> {
+export async function getAIResponse(message: string): Promise<string> {
   try {
-    const key = apiKey || getGeminiApiKey();
+    const key = getGeminiApiKey();
     
     // Make a request to Gemini API
     const response = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=' + key, {

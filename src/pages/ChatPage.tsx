@@ -20,10 +20,12 @@ import {
   AlertDialogDescription, 
   AlertDialogCancel, 
   AlertDialogAction, 
-  AlertDialogFooter 
+  AlertDialogFooter,
+  AlertDialogTrigger 
 } from '@/components/ui/alert-dialog';
 import { toast } from 'sonner';
 import { getUserActivities } from '@/services/activityService';
+import { Trash2, Key, Share2 } from 'lucide-react';
 
 export default function ChatPage() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -90,7 +92,7 @@ export default function ChatPage() {
           ).join(', ')}`
         : 'No recent activities tracked.';
       
-      // Send message to Gemini AI
+      // Send message to Gemini AI - now hardcoded API key
       const prompt = `User's question: ${input}\n\nContext: ${activitiesContext}\n\nPlease provide a helpful response as a wellness assistant.`;
       const aiResponseText = await getAIResponse(prompt);
       
@@ -127,56 +129,114 @@ export default function ChatPage() {
     setIsDeleteDialogOpen(false);
   };
 
+  const handleShareChat = async () => {
+    if (!messages.length) {
+      toast.error('No chat messages to share');
+      return;
+    }
+
+    try {
+      const chatText = messages.map(msg => 
+        `${msg.is_ai ? 'Assistant' : 'Me'}: ${msg.message}`
+      ).join('\n\n');
+      
+      // Use Web Share API if available
+      if (navigator.share) {
+        await navigator.share({
+          title: 'My Health Assistant Chat',
+          text: chatText,
+        });
+        toast.success('Chat shared successfully');
+      } else {
+        // Fallback to clipboard
+        await navigator.clipboard.writeText(chatText);
+        toast.success('Chat copied to clipboard');
+      }
+    } catch (error) {
+      console.error('Error sharing chat:', error);
+      toast.error('Failed to share chat');
+    }
+  };
+
   return (
     <div className="flex flex-col h-[calc(100vh-8.5rem)]">
-      <div className="flex justify-between items-center mb-4">
-        <h2 className="text-lg font-semibold">AI Insights Chat</h2>
-        <div className="flex gap-2">
+      <div className="flex justify-between items-center mb-3">
+        <h2 className="text-lg font-semibold">AI Insights</h2>
+        <div className="flex gap-1">
           <Button 
-            variant="outline" 
-            size="sm" 
-            onClick={() => setShowApiKeyInput(!showApiKeyInput)}
+            variant="ghost" 
+            size="icon"
+            onClick={handleShareChat}
+            title="Share Chat"
           >
-            {showApiKeyInput ? 'Hide API Key' : 'Set API Key'}
+            <Share2 size={18} />
           </Button>
-          <Button 
-            variant="destructive" 
-            size="sm" 
-            onClick={() => setIsDeleteDialogOpen(true)}
-          >
-            Delete Chat
-          </Button>
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button 
+                variant="ghost" 
+                size="icon"
+                title="Set API Key"
+              >
+                <Key size={18} />
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent className="w-[90%] max-w-sm">
+              <AlertDialogHeader>
+                <AlertDialogTitle>Gemini API Key</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Enter your custom Gemini API key (optional)
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <div className="flex items-center gap-2 pt-2 pb-4">
+                <Input
+                  placeholder="Enter Gemini API Key"
+                  value={apiKeyInput}
+                  onChange={(e) => setApiKeyInput(e.target.value)}
+                  type="password"
+                />
+              </div>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction onClick={handleSaveApiKey}>Save</AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+          <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+            <AlertDialogTrigger asChild>
+              <Button 
+                variant="ghost"
+                size="icon"
+                title="Delete All Messages"
+              >
+                <Trash2 size={18} />
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent className="w-[90%] max-w-sm">
+              <AlertDialogHeader>
+                <AlertDialogTitle>Delete all chat messages?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  This action cannot be undone. This will permanently delete your entire chat history.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction onClick={handleDeleteAllMessages}>Delete</AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         </div>
       </div>
       
-      {showApiKeyInput && (
-        <Card className="mb-4">
-          <CardContent className="p-3">
-            <div className="flex items-center gap-2">
-              <Input
-                placeholder="Enter Gemini API Key"
-                value={apiKeyInput}
-                onChange={(e) => setApiKeyInput(e.target.value)}
-                type="password"
-              />
-              <Button onClick={handleSaveApiKey}>Save</Button>
-            </div>
-            <p className="text-xs text-muted-foreground mt-1">
-              Current key: {getGeminiApiKey().slice(0, 5)}...
-            </p>
-          </CardContent>
-        </Card>
-      )}
-      
-      <div className="flex-1 overflow-y-auto mb-4 space-y-4">
+      <div className="flex-1 overflow-y-auto mb-3 space-y-3">
         {messages.map((message) => (
           <div
             key={message.id}
             className={`flex ${message.is_ai ? 'justify-start' : 'justify-end'}`}
           >
-            <Card className={`max-w-[80%] ${message.is_ai ? 'bg-card' : 'bg-primary text-primary-foreground'}`}>
-              <CardContent className="p-3">
-                <p className="whitespace-pre-wrap">{message.message}</p>
+            <Card className={`max-w-[85%] ${message.is_ai ? 'bg-card' : 'bg-primary text-primary-foreground'}`}>
+              <CardContent className="p-2.5">
+                <p className="whitespace-pre-wrap text-sm">{message.message}</p>
                 <div className="text-xs opacity-70 mt-1">
                   {new Date(message.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                 </div>
@@ -199,24 +259,6 @@ export default function ChatPage() {
           {isLoading ? 'Sending...' : 'Send'}
         </Button>
       </form>
-      
-      <AlertDialog 
-        open={isDeleteDialogOpen} 
-        onOpenChange={setIsDeleteDialogOpen}
-      >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Delete all chat messages?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete your entire chat history.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDeleteAllMessages}>Delete</AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </div>
   );
 }
