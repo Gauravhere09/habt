@@ -13,7 +13,7 @@ export default function NavBar() {
   ];
 
   return (
-    <nav className="fixed bottom-2 left-2 right-2 bg-card border border-border/30 rounded-lg shadow-lg">
+    <nav className="fixed bottom-2 left-2 right-2 bg-card border border-border/30 rounded-xl shadow-lg">
       <div className="flex justify-around p-2">
         {navItems.map((item) => {
           const isActive = location.pathname === item.path;
