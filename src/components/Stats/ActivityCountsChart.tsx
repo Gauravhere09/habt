@@ -3,9 +3,16 @@ import { ChartContainer } from '@/components/ui/chart';
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Cell, Tooltip } from 'recharts';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 
+interface ChartConfigItem {
+  label?: React.ReactNode;
+  icon?: React.ComponentType;
+  color?: string;
+  theme?: Record<string, string>;
+}
+
 interface ActivityCountsChartProps {
   data: any[];
-  chartConfig: any;
+  chartConfig: Record<string, ChartConfigItem>;
   isEmpty: boolean;
 }
 
@@ -45,12 +52,16 @@ export default function ActivityCountsChart({ data, chartConfig, isEmpty }: Acti
                   }}
                 />
                 <Bar dataKey="count" radius={[4, 4, 0, 0]}>
-                  {data.map((entry, index) => (
-                    <Cell 
-                      key={`cell-${index}`}
-                      fill={Object.values(chartConfig)[index % Object.values(chartConfig).length].color}
-                    />
-                  ))}
+                  {data.map((entry, index) => {
+                    const configValues = Object.values(chartConfig);
+                    const configItem = configValues[index % configValues.length] as ChartConfigItem;
+                    return (
+                      <Cell 
+                        key={`cell-${index}`}
+                        fill={configItem?.color || '#6366f1'} // Add fallback color
+                      />
+                    );
+                  })}
                 </Bar>
               </BarChart>
             </ResponsiveContainer>
