@@ -24,7 +24,7 @@ export default function Header() {
   };
 
   return (
-    <header className="p-3 border-b border-border/30">
+    <header className="p-2 border-b border-border/30">
       <h1 className={`font-semibold text-center ${isMobile ? 'text-lg' : 'text-xl'}`}>{getPageTitle()}</h1>
     </header>
   );

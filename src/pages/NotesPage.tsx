@@ -15,6 +15,7 @@ import {
 import { toast } from 'sonner';
 import { useAuth } from '@/context/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import { StickyNote } from 'lucide-react';
 
 export default function NotesPage() {
   const [notes, setNotes] = useState<Note[]>([]);
@@ -37,6 +38,8 @@ export default function NotesPage() {
   }, [user, navigate]);
 
   const loadNotes = async () => {
+    if (!user) return;
+    
     const fetchedNotes = await getUserNotes();
     setNotes(fetchedNotes);
   };

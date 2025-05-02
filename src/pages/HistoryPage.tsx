@@ -5,11 +5,16 @@ import { getUserActivities, deleteActivity, Activity as ActivityType } from '@/s
 import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogCancel, AlertDialogAction, AlertDialogFooter } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
+import { StickyNote } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '@/context/AuthContext';
 
 export default function HistoryPage() {
   const [activities, setActivities] = useState<ActivityType[]>([]);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const navigate = useNavigate();
+  const { user } = useAuth();
 
   const loadActivities = async () => {
     const data = await getUserActivities();
@@ -37,6 +42,10 @@ export default function HistoryPage() {
     setDeleteId(null);
   };
 
+  const navigateToNotes = () => {
+    navigate('/notes');
+  };
+
   // Group activities by date
   const groupedActivities: Record<string, ActivityType[]> = {};
   activities.forEach(activity => {
@@ -51,6 +60,17 @@ export default function HistoryPage() {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold">Activity History</h2>
+        {user && (
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            onClick={navigateToNotes} 
+            className="ml-auto" 
+            title="Notes"
+          >
+            <StickyNote size={18} />
+          </Button>
+        )}
       </div>
       
       {Object.keys(groupedActivities).length > 0 ? (

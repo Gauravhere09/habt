@@ -10,9 +10,9 @@ export default function AppLayout() {
   const isMobile = useIsMobile();
   
   return (
-    <div className="flex flex-col min-h-screen bg-background text-foreground pb-16">
+    <div className="flex flex-col min-h-screen bg-background text-foreground pb-14">
       <Header />
-      <main className="flex-1 p-3 sm:p-4 overflow-auto">
+      <main className="flex-1 p-2 sm:p-3 overflow-auto">
         <Outlet />
       </main>
       <NavBar />
