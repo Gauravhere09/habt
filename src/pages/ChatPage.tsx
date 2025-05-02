@@ -1,17 +1,7 @@
 
-import { useState, useEffect, useRef } from 'react';
+import { useRef, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { 
-  getChatMessages, 
-  createChatMessage, 
-  getAIResponse, 
-  deleteAllChatMessages, 
-  getGeminiApiKey, 
-  setGeminiApiKey, 
-  ChatMessage 
-} from '@/services/chatService';
 import { 
   AlertDialog, 
   AlertDialogContent, 
@@ -23,22 +13,25 @@ import {
   AlertDialogFooter,
   AlertDialogTrigger 
 } from '@/components/ui/alert-dialog';
+import { 
+  deleteAllChatMessages, 
+  getGeminiApiKey, 
+  setGeminiApiKey
+} from '@/services/chatService';
 import { toast } from 'sonner';
-import { getUserActivities } from '@/services/activityService';
 import { Trash2, Key, Share2 } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { useState } from 'react';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import ChatMessage from '@/components/Chat/ChatMessage';
+import ChatInput from '@/components/Chat/ChatInput';
+import useChatMessages from '@/hooks/useChatMessages';
 
 export default function ChatPage() {
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const [input, setInput] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
+  const { messages, isLoading, includeContext, sendMessage, toggleContext, refresh } = useChatMessages();
   const [apiKeyInput, setApiKeyInput] = useState('');
-  const [showApiKeyInput, setShowApiKeyInput] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    loadMessages();
-  }, []);
 
   useEffect(() => {
     scrollToBottom();
@@ -48,97 +41,10 @@ export default function ChatPage() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
-  const loadMessages = async () => {
-    const fetchedMessages = await getChatMessages();
-    
-    // If no messages, add a welcome message
-    if (fetchedMessages.length === 0) {
-      setMessages([
-        {
-          id: '1',
-          message: "Hello! I'm your wellness assistant. I can provide insights about your health habits and answer your questions.",
-          is_ai: true,
-          created_at: new Date().toISOString()
-        }
-      ]);
-    } else {
-      setMessages(fetchedMessages);
-    }
-  };
-
-  const handleSendMessage = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!input.trim()) return;
-
-    setIsLoading(true);
-    
-    // Add user message to chat
-    const userMessage = await createChatMessage(input, false);
-    if (userMessage) {
-      setMessages(prev => [...prev, userMessage]);
-    }
-    
-    setInput('');
-    
-    try {
-      // Fetch user activities for context
-      const activities = await getUserActivities();
-      const recentActivities = activities.slice(0, 20); // Increased from 10 to 20 for better context
-      
-      // Format recent activities for the AI with more detail
-      const activitiesContext = recentActivities.length > 0 
-        ? `Recent activities: ${recentActivities.map(a => 
-            `${a.emoji} ${a.activity_type}${a.value ? ` (${a.value})` : ''} at ${new Date(a.created_at).toLocaleString()}`
-          ).join(', ')}`
-        : 'No recent activities tracked.';
-      
-      // Activity counts for better insights
-      const activityCounts: Record<string, number> = {};
-      const activityValues: Record<string, number[]> = {};
-      
-      activities.forEach(activity => {
-        if (!activityCounts[activity.activity_type]) {
-          activityCounts[activity.activity_type] = 0;
-          activityValues[activity.activity_type] = [];
-        }
-        activityCounts[activity.activity_type]++;
-        if (activity.value && !isNaN(parseFloat(activity.value))) {
-          activityValues[activity.activity_type].push(parseFloat(activity.value));
-        }
-      });
-      
-      // Activity statistics for better insights
-      const activityStats = Object.entries(activityCounts)
-        .map(([type, count]) => {
-          const values = activityValues[type];
-          const avgValue = values.length > 0 
-            ? (values.reduce((sum, val) => sum + val, 0) / values.length).toFixed(1) 
-            : null;
-          return `${type}: ${count} times${avgValue ? `, avg ${avgValue}` : ''}`;
-        }).join('; ');
-      
-      // Send message to Gemini AI with enhanced context
-      const prompt = `User's question: ${input}\n\nContext: ${activitiesContext}\n\nActivity Statistics: ${activityStats}\n\nPlease provide a helpful response as a wellness assistant based on this data.`;
-      const aiResponseText = await getAIResponse(prompt);
-      
-      // Add AI response to chat
-      const aiMessage = await createChatMessage(aiResponseText, true);
-      if (aiMessage) {
-        setMessages(prev => [...prev, aiMessage]);
-      }
-    } catch (error) {
-      console.error('Error getting AI response:', error);
-      toast.error('Failed to get AI response. Please try again.');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   const handleSaveApiKey = () => {
     if (apiKeyInput.trim()) {
       setGeminiApiKey(apiKeyInput.trim());
       toast.success('API key saved successfully');
-      setShowApiKeyInput(false);
       setApiKeyInput('');
     } else {
       toast.error('Please enter a valid API key');
@@ -149,7 +55,7 @@ export default function ChatPage() {
     const success = await deleteAllChatMessages();
     if (success) {
       toast.success('Chat history deleted successfully');
-      loadMessages(); // Reload with welcome message
+      refresh(); // Reload with welcome message
     }
     setIsDeleteDialogOpen(false);
   };
@@ -162,19 +68,21 @@ export default function ChatPage() {
 
     try {
       const chatText = messages.map(msg => 
-        `${msg.is_ai ? 'Assistant' : 'Me'}: ${msg.message}`
+        `${msg.is_ai ? 'Assistant' : 'Me'} (${new Date(msg.created_at).toLocaleString()}):\n${msg.message}`
       ).join('\n\n');
+      
+      const shareTitle = 'My Health Assistant Chat';
       
       // Use Web Share API if available
       if (navigator.share) {
         await navigator.share({
-          title: 'My Health Assistant Chat',
+          title: shareTitle,
           text: chatText,
         });
         toast.success('Chat shared successfully');
       } else {
         // Fallback to clipboard
-        await navigator.clipboard.writeText(chatText);
+        await navigator.clipboard.writeText(`${shareTitle}\n\n${chatText}`);
         toast.success('Chat copied to clipboard');
       }
     } catch (error) {
@@ -253,37 +161,20 @@ export default function ChatPage() {
         </div>
       </div>
       
-      <div className="flex-1 overflow-y-auto mb-3 space-y-3">
-        {messages.map((message) => (
-          <div
-            key={message.id}
-            className={`flex ${message.is_ai ? 'justify-start' : 'justify-end'}`}
-          >
-            <Card className={`max-w-[85%] ${message.is_ai ? 'bg-card' : 'bg-primary text-primary-foreground'}`}>
-              <CardContent className="p-2.5">
-                <p className="whitespace-pre-wrap text-sm">{message.message}</p>
-                <div className="text-xs opacity-70 mt-1">
-                  {new Date(message.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        ))}
+      <ScrollArea className="flex-1 mb-3 pr-3">
+        <div className="space-y-3">
+          {messages.map((message) => (
+            <ChatMessage key={message.id} message={message} />
+          ))}
+        </div>
         <div ref={messagesEndRef} />
-      </div>
+      </ScrollArea>
 
-      <form onSubmit={handleSendMessage} className="flex gap-2">
-        <Input
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          placeholder="Ask about your habits..."
-          className="flex-1"
-          disabled={isLoading}
-        />
-        <Button type="submit" disabled={!input.trim() || isLoading}>
-          {isLoading ? 'Sending...' : 'Send'}
-        </Button>
-      </form>
+      <ChatInput 
+        onSendMessage={sendMessage} 
+        onAttachContext={toggleContext} 
+        isLoading={isLoading} 
+      />
     </div>
   );
 }
