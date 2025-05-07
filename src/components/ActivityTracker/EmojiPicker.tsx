@@ -3,23 +3,16 @@ import { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
-const emojis = [
-  "📝", "⭐", "🎯", "📊", "🧩", "🎨", "🎬", "📚", "📱",  
-  "💼", "🔔", "🏆", "🔍", "📌", "🔑", "💡", "📋", "📎", 
-  "⏰", "📅", "🧠", "💪", "🎵", "💵", "🏡", "🚶", "🛒",
-  "😀", "🙂", "😊", "😍", "🤔", "😴", "🥳", "😎", "🤓",
-  "🚀", "🏃", "🚴", "🧘", "💧", "💊", "🧹", "🛌", "💰",
-  "🥗", "🍎", "🥑", "🥦", "🥤", "☕", "🍵", "🍽️", "🥛",
-  "🐶", "🐱", "🐦", "🌈", "🌞", "⛅", "🌧️", "❄️", "🔥",
-  "💻", "📲", "🔋", "🔌", "📦", "🔒", "🔓", "🧮", "🎮"
-];
-
+// Updated with more emojis across categories
 const categoryEmojis: Record<string, string[]> = {
-  "Common": ["📝", "⭐", "🎯", "📊", "🧩", "🔔", "💪", "⏰", "📅", "🚀"],
-  "Activities": ["🧘", "🏃", "🚶", "🛒", "🧹", "🛌", "📚", "📱", "💻"],
-  "Health": ["💧", "😴", "💊", "🥗", "🍎", "🥑", "🥦", "🥤", "☕"],
-  "Emotions": ["😀", "🙂", "😊", "😍", "🤔", "😴", "🥳", "😎", "🤓"],
-  "Other": ["🎨", "💼", "🏆", "🔍", "💡", "📦", "🔒", "🔓", "🎮"]
+  "Common": ["📝", "⭐", "🎯", "📊", "🧩", "🔔", "💪", "⏰", "📅", "🚀", "🎵", "💼", "🏆"],
+  "Activities": ["🧘", "🏃", "🚶", "🛒", "🧹", "🛌", "📚", "📱", "💻", "🎮", "🎬", "🎨", "🚴", "🧠"],
+  "Health": ["💧", "😴", "💊", "🥗", "🍎", "🥑", "🥦", "🥤", "☕", "💉", "🧠", "🤒", "💪", "🏋️"],
+  "Emotions": ["😀", "🙂", "😊", "😍", "🤔", "😴", "🥳", "😎", "🤓", "😢", "😡", "😌", "😬", "🥰"],
+  "Food": ["🍕", "🍔", "🍟", "🌮", "🥗", "🍎", "🍌", "🥑", "🥦", "🍗", "🍞", "🥛", "🍩", "🍦"],
+  "Travel": ["✈️", "🚗", "🚆", "🚌", "🏝️", "🏔️", "🏙️", "🗺️", "🧳", "⛱️", "🚢", "🚶", "🧭", "🏕️"],
+  "Home": ["🏠", "🛋️", "🛏️", "🪑", "🚿", "🧹", "🧼", "🧺", "🪴", "📺", "💡", "🔑", "🚪", "🧰"],
+  "Other": ["🎁", "💰", "📦", "🔒", "🔓", "💌", "📱", "📞", "💬", "📷", "🔍", "⚙️", "🧩", "🎲"]
 };
 
 const categories = Object.keys(categoryEmojis);
@@ -32,6 +25,15 @@ interface EmojiPickerProps {
 export function EmojiPicker({ value, onChange }: EmojiPickerProps) {
   const [open, setOpen] = useState(false);
   const [currentCategory, setCurrentCategory] = useState("Common");
+  const [searchQuery, setSearchQuery] = useState("");
+
+  // Flatten all emojis for search
+  const allEmojis = Object.values(categoryEmojis).flat();
+  
+  // Filter emojis based on search query
+  const filteredEmojis = searchQuery 
+    ? allEmojis.filter(emoji => emoji.includes(searchQuery))
+    : categoryEmojis[currentCategory];
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -43,13 +45,22 @@ export function EmojiPicker({ value, onChange }: EmojiPickerProps) {
       <PopoverContent className="w-80 p-0">
         <div className="p-3 border-b">
           <div className="text-sm font-medium mb-2">Select Emoji</div>
+          <Input
+            placeholder="Search emoji..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="mb-2"
+          />
           <div className="flex gap-1 overflow-x-auto pb-2">
             {categories.map((category) => (
               <Button 
                 key={category}
                 size="sm"
-                variant={currentCategory === category ? "default" : "outline"}
-                onClick={() => setCurrentCategory(category)}
+                variant={currentCategory === category && !searchQuery ? "default" : "outline"}
+                onClick={() => {
+                  setCurrentCategory(category);
+                  setSearchQuery("");
+                }}
                 className="whitespace-nowrap text-xs"
               >
                 {category}
@@ -58,7 +69,7 @@ export function EmojiPicker({ value, onChange }: EmojiPickerProps) {
           </div>
         </div>
         <div className="p-2 grid grid-cols-8 gap-1 max-h-60 overflow-y-auto">
-          {categoryEmojis[currentCategory].map((emoji) => (
+          {filteredEmojis.map((emoji) => (
             <Button
               key={emoji}
               variant="ghost"

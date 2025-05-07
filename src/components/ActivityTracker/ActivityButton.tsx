@@ -1,11 +1,12 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { Activity } from '@/types/activity';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { createActivity } from '@/services/activityService';
+import { createActivity, getActivitiesByType } from '@/services/activityService';
+import { useAuth } from '@/context/AuthContext';
 
 interface ActivityButtonProps {
   activity: Activity;
@@ -16,10 +17,63 @@ export default function ActivityButton({ activity, onTrack }: ActivityButtonProp
   const [isAnimating, setIsAnimating] = useState(false);
   const [showDialog, setShowDialog] = useState(false);
   const [value, setValue] = useState('');
+  const [canTrack, setCanTrack] = useState(true);
+  const [timeRemaining, setTimeRemaining] = useState(0);
+  const { user } = useAuth();
   
   const needsValue = activity.valueType && activity.valueType !== 'click';
   
+  // Check if the activity was tracked in the last 30 minutes
+  useEffect(() => {
+    const checkLastTracked = async () => {
+      const activities = await getActivitiesByType(activity.name);
+      
+      if (activities.length > 0) {
+        const lastTracked = new Date(activities[0].created_at);
+        const thirtyMinutesAgo = new Date(Date.now() - 30 * 60 * 1000);
+        
+        if (lastTracked > thirtyMinutesAgo) {
+          setCanTrack(false);
+          
+          // Calculate remaining time in seconds
+          const remainingTime = Math.ceil((lastTracked.getTime() + 30 * 60 * 1000 - Date.now()) / 1000);
+          setTimeRemaining(remainingTime);
+          
+          // Set up countdown timer
+          const timer = setInterval(() => {
+            setTimeRemaining((prev) => {
+              if (prev <= 1) {
+                clearInterval(timer);
+                setCanTrack(true);
+                return 0;
+              }
+              return prev - 1;
+            });
+          }, 1000);
+          
+          return () => clearInterval(timer);
+        }
+      }
+    };
+    
+    checkLastTracked();
+  }, [activity.name]);
+  
   const handleClick = () => {
+    // If user is not logged in, show a toast message
+    if (!user) {
+      toast.error("You need to log in to track activities");
+      return;
+    }
+    
+    // If cannot track yet due to 30-minute restriction
+    if (!canTrack) {
+      const minutes = Math.floor(timeRemaining / 60);
+      const seconds = timeRemaining % 60;
+      toast.error(`Please wait ${minutes}:${seconds < 10 ? '0' + seconds : seconds} before tracking ${activity.name} again`);
+      return;
+    }
+    
     setIsAnimating(true);
     
     if (needsValue) {
@@ -45,6 +99,8 @@ export default function ActivityButton({ activity, onTrack }: ActivityButtonProp
       onTrack();
       setShowDialog(false);
       setValue('');
+      setCanTrack(false);
+      setTimeRemaining(30 * 60); // 30 minutes in seconds
     } catch (error) {
       console.error('Error tracking activity:', error);
     }
@@ -59,14 +115,25 @@ export default function ActivityButton({ activity, onTrack }: ActivityButtonProp
     }
   };
   
+  const formatTimeRemaining = () => {
+    const minutes = Math.floor(timeRemaining / 60);
+    const seconds = timeRemaining % 60;
+    return `${minutes}:${seconds < 10 ? '0' + seconds : seconds}`;
+  };
+  
   return (
     <>
       <div 
-        className={`activity-card bg-card/50 border border-border/50 flex flex-col items-center justify-center w-full p-4 rounded-xl cursor-pointer hover:bg-card/70 transition-all ${isAnimating ? 'animate-scale-in' : ''}`}
+        className={`activity-card bg-card/50 border border-border/50 flex flex-col items-center justify-center w-full p-4 rounded-xl cursor-pointer hover:bg-card/70 transition-all ${isAnimating ? 'animate-scale-in' : ''} ${!canTrack ? 'opacity-50' : ''}`}
         onClick={handleClick}
       >
         <span className="activity-icon text-4xl mb-2">{activity.emoji}</span>
         <span className="text-base font-medium">{activity.name}</span>
+        {!canTrack && (
+          <span className="text-xs text-muted-foreground mt-1">
+            Wait {formatTimeRemaining()}
+          </span>
+        )}
       </div>
 
       {needsValue && (

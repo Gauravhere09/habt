@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -13,6 +13,9 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
 import { EmojiPicker } from './EmojiPicker';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/context/AuthContext';
+import { useNavigate } from 'react-router-dom';
 
 const formSchema = z.object({
   name: z.string().min(1, 'Task name is required'),
@@ -30,6 +33,8 @@ interface AddTaskDialogProps {
 const defaultEmojis = ["📝", "⭐", "🎯", "📊", "🧩", "🔔", "🎨", "🎬", "📚", "💼"];
 
 export function AddTaskDialog({ open, onOpenChange, onTaskAdded }: AddTaskDialogProps) {
+  const { user } = useAuth();
+  const navigate = useNavigate();
   const [randomEmoji] = useState(() => {
     return defaultEmojis[Math.floor(Math.random() * defaultEmojis.length)];
   });
@@ -44,7 +49,23 @@ export function AddTaskDialog({ open, onOpenChange, onTaskAdded }: AddTaskDialog
     },
   });
 
+  useEffect(() => {
+    // If dialog is opened but user is not logged in
+    if (open && !user) {
+      toast.error("You need to log in to create custom activities");
+      onOpenChange(false);
+      navigate("/auth");
+    }
+  }, [open, user, navigate, onOpenChange]);
+
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
+    if (!user) {
+      toast.error("You need to log in to create custom activities");
+      onOpenChange(false);
+      navigate("/auth");
+      return;
+    }
+
     try {
       const newActivity: Activity = {
         id: crypto.randomUUID(),
@@ -54,9 +75,30 @@ export function AddTaskDialog({ open, onOpenChange, onTaskAdded }: AddTaskDialog
         valueType: values.valueType,
       };
       
-      // First, add to localStorage
+      // Add to localStorage
       const storedActivities = JSON.parse(localStorage.getItem('customActivities') || '[]');
       localStorage.setItem('customActivities', JSON.stringify([...storedActivities, newActivity]));
+      
+      // Save to Supabase if user is logged in
+      if (user) {
+        try {
+          const { error } = await supabase
+            .from('custom_activities')
+            .insert({
+              user_id: user.id,
+              activity_id: newActivity.id,
+              name: newActivity.name,
+              emoji: newActivity.emoji,
+              value_type: newActivity.valueType,
+              description: newActivity.description || null
+            });
+            
+          if (error) throw error;
+        } catch (error: any) {
+          console.error("Error saving to Supabase:", error);
+          // Continue with the flow even if Supabase save fails
+        }
+      }
       
       // Create first activity instance
       await createActivity(values.name, values.emoji);

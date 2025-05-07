@@ -21,7 +21,7 @@ export const defaultActivities: Activity[] = [
     name: 'Water',
     emoji: '💧',
     description: 'Track water intake',
-    valueType: 'number'
+    valueType: 'click' // Changed from 'number' to 'click'
   },
   {
     id: 'screen',

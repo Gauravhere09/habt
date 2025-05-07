@@ -1,5 +1,6 @@
 
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import ActivityButton from '@/components/ActivityTracker/ActivityButton';
 import { Activity, defaultActivities } from '@/types/activity';
 import { Card, CardContent } from '@/components/ui/card';
@@ -7,19 +8,33 @@ import { getUserActivities } from '@/services/activityService';
 import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
 import { AddTaskDialog } from '@/components/ActivityTracker/AddTaskDialog';
+import { useAuth } from '@/context/AuthContext';
+import { toast } from 'sonner';
 
 export default function ActivityPage() {
   const [activities, setActivities] = useState<Activity[]>(defaultActivities);
   const [todaysCount, setTodaysCount] = useState<Record<string, number>>({});
   const [isAddTaskDialogOpen, setIsAddTaskDialogOpen] = useState(false);
   const [customActivities, setCustomActivities] = useState<Activity[]>([]);
+  const { user } = useAuth();
+  const navigate = useNavigate();
 
   const fetchActivities = async () => {
     try {
-      // Get custom activities from localStorage
+      // Get custom activities from localStorage and Supabase
       const storedActivities = localStorage.getItem('customActivities');
       if (storedActivities) {
         setCustomActivities(JSON.parse(storedActivities));
+      }
+      
+      // If user is logged in, also fetch from Supabase
+      if (user) {
+        try {
+          // This is where we would fetch custom activities from Supabase
+          // For now, we'll just use localStorage data
+        } catch (error) {
+          console.error("Error loading custom activities from Supabase:", error);
+        }
       }
     } catch (error) {
       console.error("Error loading custom activities:", error);
@@ -53,19 +68,30 @@ export default function ActivityPage() {
   useEffect(() => {
     fetchTodaysActivities();
     fetchActivities();
-  }, []);
+  }, [user]);
 
   const handleActivityTrack = () => {
     fetchTodaysActivities();
   };
   
-  const handleTaskAdded = (newActivity: Activity) => {
-    setCustomActivities(prev => {
-      const updated = [...prev, newActivity];
-      localStorage.setItem('customActivities', JSON.stringify(updated));
-      return updated;
-    });
+  const handleTaskAdded = (newActivity?: Activity) => {
+    if (newActivity) {
+      setCustomActivities(prev => {
+        const updated = [...prev, newActivity];
+        localStorage.setItem('customActivities', JSON.stringify(updated));
+        return updated;
+      });
+    }
     fetchTodaysActivities();
+  };
+  
+  const handleAddTaskClick = () => {
+    if (!user) {
+      toast.error("You need to log in to create custom activities");
+      navigate("/auth");
+      return;
+    }
+    setIsAddTaskDialogOpen(true);
   };
 
   // Combine default and custom activities
@@ -78,7 +104,7 @@ export default function ActivityPage() {
         <Button 
           variant="outline" 
           size="sm"
-          onClick={() => setIsAddTaskDialogOpen(true)}
+          onClick={handleAddTaskClick}
           className="flex items-center gap-1"
         >
           <Plus className="h-4 w-4" /> Add Task
@@ -133,7 +159,7 @@ export default function ActivityPage() {
           variant="default" 
           size="icon" 
           className="rounded-full h-14 w-14 shadow-lg"
-          onClick={() => setIsAddTaskDialogOpen(true)}
+          onClick={handleAddTaskClick}
         >
           <Plus className="h-6 w-6" />
         </Button>
