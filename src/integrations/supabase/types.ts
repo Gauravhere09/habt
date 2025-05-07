@@ -15,6 +15,7 @@ export type Database = {
           created_at: string | null
           emoji: string | null
           id: string
+          last_tracked: string | null
           user_id: string | null
           value: string | null
         }
@@ -23,6 +24,7 @@ export type Database = {
           created_at?: string | null
           emoji?: string | null
           id?: string
+          last_tracked?: string | null
           user_id?: string | null
           value?: string | null
         }
@@ -31,6 +33,7 @@ export type Database = {
           created_at?: string | null
           emoji?: string | null
           id?: string
+          last_tracked?: string | null
           user_id?: string | null
           value?: string | null
         }

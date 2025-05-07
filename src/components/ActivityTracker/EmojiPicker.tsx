@@ -43,7 +43,7 @@ export function EmojiPicker({ value, onChange }: EmojiPickerProps) {
           {value}
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-80 p-0">
+      <PopoverContent className="w-80 p-0" sideOffset={5}>
         <div className="p-3 border-b">
           <div className="text-sm font-medium mb-2">Select Emoji</div>
           <Input
@@ -52,7 +52,7 @@ export function EmojiPicker({ value, onChange }: EmojiPickerProps) {
             onChange={(e) => setSearchQuery(e.target.value)}
             className="mb-2"
           />
-          <div className="flex gap-1 overflow-x-auto pb-2">
+          <div className="flex gap-1 overflow-x-auto py-2" style={{ scrollbarWidth: 'thin' }}>
             {categories.map((category) => (
               <Button 
                 key={category}
@@ -62,14 +62,14 @@ export function EmojiPicker({ value, onChange }: EmojiPickerProps) {
                   setCurrentCategory(category);
                   setSearchQuery("");
                 }}
-                className="whitespace-nowrap text-xs"
+                className="whitespace-nowrap text-xs flex-shrink-0"
               >
                 {category}
               </Button>
             ))}
           </div>
         </div>
-        <div className="p-2 grid grid-cols-8 gap-1 max-h-60 overflow-y-auto">
+        <div className="p-2 grid grid-cols-8 gap-1 max-h-60 overflow-y-auto" style={{ scrollbarWidth: 'thin' }}>
           {filteredEmojis.map((emoji) => (
             <Button
               key={emoji}
