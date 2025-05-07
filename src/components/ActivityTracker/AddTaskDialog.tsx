@@ -83,14 +83,13 @@ export function AddTaskDialog({ open, onOpenChange, onTaskAdded }: AddTaskDialog
       if (user) {
         try {
           const { error } = await supabase
-            .from('custom_activities')
+            .from('activities')
             .insert({
               user_id: user.id,
-              activity_id: newActivity.id,
-              name: newActivity.name,
+              activity_type: newActivity.name,
               emoji: newActivity.emoji,
-              value_type: newActivity.valueType,
-              description: newActivity.description || null
+              value: newActivity.valueType || null,
+              id: newActivity.id
             });
             
           if (error) throw error;
