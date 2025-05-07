@@ -5,6 +5,7 @@ export interface Activity {
   emoji: string;
   color?: string;
   description?: string;
+  valueType?: 'click' | 'number' | 'text' | 'duration';
 }
 
 export const defaultActivities: Activity[] = [
@@ -12,36 +13,21 @@ export const defaultActivities: Activity[] = [
     id: 'poop',
     name: 'Bathroom',
     emoji: '💩',
-    description: 'Track bathroom visits'
+    description: 'Track bathroom visits',
+    valueType: 'click'
   },
   {
     id: 'water',
     name: 'Water',
     emoji: '💧',
-    description: 'Track water intake'
+    description: 'Track water intake',
+    valueType: 'number'
   },
   {
     id: 'screen',
     name: 'Screen Time',
     emoji: '📱',
-    description: 'Track screen time'
-  },
-  {
-    id: 'sleep',
-    name: 'Sleep',
-    emoji: '😴',
-    description: 'Track sleep'
-  },
-  {
-    id: 'exercise',
-    name: 'Exercise',
-    emoji: '🏃',
-    description: 'Track exercise'
-  },
-  {
-    id: 'meal',
-    name: 'Meal',
-    emoji: '🍽️',
-    description: 'Track meals'
+    description: 'Track screen time',
+    valueType: 'duration'
   }
 ];

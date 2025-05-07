@@ -17,7 +17,7 @@ export default function ActivityButton({ activity, onTrack }: ActivityButtonProp
   const [showDialog, setShowDialog] = useState(false);
   const [value, setValue] = useState('');
   
-  const needsValue = ['water', 'screen', 'sleep', 'exercise'].includes(activity.id);
+  const needsValue = activity.valueType && activity.valueType !== 'click';
   
   const handleClick = () => {
     setIsAnimating(true);
@@ -51,11 +51,10 @@ export default function ActivityButton({ activity, onTrack }: ActivityButtonProp
   };
 
   const getPlaceholder = () => {
-    switch(activity.id) {
-      case 'water': return 'Enter amount in ml/oz';
-      case 'screen': return 'Enter time in minutes';
-      case 'sleep': return 'Enter duration in hours';
-      case 'exercise': return 'Enter duration in minutes';
+    switch(activity.valueType) {
+      case 'number': return 'Enter a number';
+      case 'duration': return 'Enter duration';
+      case 'text': return 'Enter text';
       default: return 'Enter value';
     }
   };
@@ -81,7 +80,7 @@ export default function ActivityButton({ activity, onTrack }: ActivityButtonProp
                 placeholder={getPlaceholder()}
                 value={value}
                 onChange={(e) => setValue(e.target.value)}
-                type="text"
+                type={activity.valueType === 'number' ? 'number' : 'text'}
                 autoFocus
               />
             </div>

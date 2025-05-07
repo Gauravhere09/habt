@@ -1,13 +1,15 @@
+
 import { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { getUserActivities, deleteActivity, Activity as ActivityType } from '@/services/activityService';
 import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogCancel, AlertDialogAction, AlertDialogFooter } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
-import { StickyNote } from 'lucide-react';
+import { StickyNote, Plus } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { AddTaskDialog } from '@/components/ActivityTracker/AddTaskDialog';
 
 export default function HistoryPage() {
   const [activities, setActivities] = useState<ActivityType[]>([]);
@@ -15,6 +17,7 @@ export default function HistoryPage() {
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [activeFilter, setActiveFilter] = useState('all');
+  const [isAddTaskDialogOpen, setIsAddTaskDialogOpen] = useState(false);
   const navigate = useNavigate();
   const { user } = useAuth();
 
@@ -68,14 +71,15 @@ export default function HistoryPage() {
     const emojiMap: Record<string, string> = {
       'all': '🔍',
       'water': '💧',
-      'food': '🍽️',
-      'sleep': '😴',
-      'exercise': '🏋️',
-      'meditation': '🧘',
-      'mood': '😊',
-      'symptom': '🤒',
-      'medication': '💊'
+      'bathroom': '💩',
+      'screen': '📱',
     };
+    
+    // For custom activities, try to find their emoji from the activities list
+    if (!emojiMap[type.toLowerCase()]) {
+      const activity = activities.find(a => a.activity_type.toLowerCase() === type.toLowerCase());
+      if (activity) return activity.emoji;
+    }
     
     return emojiMap[type.toLowerCase()] || '📝';
   };
@@ -94,17 +98,27 @@ export default function HistoryPage() {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold">Activity History</h2>
-        {user && (
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            onClick={navigateToNotes} 
-            className="ml-auto" 
-            title="Notes"
+        <div className="flex gap-2">
+          {user && (
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              onClick={navigateToNotes} 
+              title="Notes"
+            >
+              <StickyNote size={18} />
+            </Button>
+          )}
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={() => setIsAddTaskDialogOpen(true)}
+            title="Add New Task"
+            className="rounded-full"
           >
-            <StickyNote size={18} />
+            <Plus size={18} />
           </Button>
-        )}
+        </div>
       </div>
       
       <Tabs value={activeFilter} onValueChange={handleFilterChange} className="w-full">
@@ -186,6 +200,23 @@ export default function HistoryPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <AddTaskDialog 
+        open={isAddTaskDialogOpen} 
+        onOpenChange={setIsAddTaskDialogOpen} 
+        onTaskAdded={loadActivities}
+      />
+
+      <div className="fixed bottom-16 right-4">
+        <Button 
+          variant="default" 
+          size="icon" 
+          className="rounded-full h-14 w-14 shadow-lg"
+          onClick={() => setIsAddTaskDialogOpen(true)}
+        >
+          <Plus className="h-6 w-6" />
+        </Button>
+      </div>
     </div>
   );
 }

@@ -122,10 +122,7 @@ export default function useActivityStats(timePeriod: TimePeriod) {
   const activityTypeCounts = useMemo(() => ({
     water: { count: getActivityTypeCount('Water') },
     bathroom: { count: getActivityTypeCount('Bathroom') },
-    sleep: { value: getActivityValue('Sleep') },
-    screenTime: { value: getActivityValue('Screen Time') },
-    exercise: { value: getActivityValue('Exercise') },
-    meal: { count: getActivityTypeCount('Meal') }
+    screenTime: { value: getActivityValue('Screen Time') }
   }), [filteredActivities]);
 
   const isEmpty = filteredActivities.length === 0;

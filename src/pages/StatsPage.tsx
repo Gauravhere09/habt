@@ -12,10 +12,7 @@ import useActivityStats from '@/hooks/useActivityStats';
 const chartConfig = {
   water: { label: 'Water', color: '#0ea5e9' },
   bathroom: { label: 'Bathroom', color: '#8b5cf6' },
-  sleep: { label: 'Sleep', color: '#10b981' },
-  exercise: { label: 'Exercise', color: '#f97316' },
   screen: { label: 'Screen Time', color: '#6366f1' },
-  meal: { label: 'Meal', color: '#f59e0b' },
 };
 
 export default function StatsPage() {
@@ -38,11 +35,8 @@ export default function StatsPage() {
       let statsText = `My Health Stats (${timePeriod.charAt(0).toUpperCase() + timePeriod.slice(1)})\n\n`;
       
       statsText += `Water: ${activityTypeCounts.water.count} times\n`;
-      statsText += `Sleep: ${activityTypeCounts.sleep.value} hours\n`;
-      statsText += `Exercise: ${activityTypeCounts.exercise.value} minutes\n`;
       statsText += `Screen Time: ${activityTypeCounts.screenTime.value} hours\n`;
-      statsText += `Bathroom: ${activityTypeCounts.bathroom.count} times\n`;
-      statsText += `Meal: ${activityTypeCounts.meal.count} times\n\n`;
+      statsText += `Bathroom: ${activityTypeCounts.bathroom.count} times\n\n`;
       
       statsText += `Total activities: ${filteredActivities.length}`;
       
