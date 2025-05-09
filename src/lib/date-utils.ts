@@ -19,3 +19,13 @@ export function formatFullDate(dateString: string): string {
     minute: '2-digit'
   });
 }
+
+export function formatShortDate(dateString: string): string {
+  const date = new Date(dateString);
+  
+  return date.toLocaleDateString([], {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric'
+  });
+}

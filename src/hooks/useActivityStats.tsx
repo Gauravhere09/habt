@@ -1,7 +1,7 @@
-
 import { useState, useEffect, useMemo } from 'react';
 import { getUserActivities, Activity } from '@/services/activityService';
 import { TimePeriod } from '@/components/Stats/TimePeriodTabs';
+import { formatShortDate } from '@/lib/date-utils';
 
 export default function useActivityStats(timePeriod: TimePeriod) {
   const [activities, setActivities] = useState<Activity[]>([]);

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { getUserActivities, deleteActivity, Activity as ActivityType } from '@/services/activityService';
@@ -10,6 +9,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { AddTaskDialog } from '@/components/ActivityTracker/AddTaskDialog';
+import { formatShortDate } from '@/lib/date-utils';
 
 export default function HistoryPage() {
   const [activities, setActivities] = useState<ActivityType[]>([]);
@@ -87,7 +87,8 @@ export default function HistoryPage() {
   // Group activities by date
   const groupedActivities: Record<string, ActivityType[]> = {};
   filteredActivities.forEach(activity => {
-    const date = new Date(activity.created_at).toLocaleDateString();
+    // Format the date as "1 Jan 2025" for grouping
+    const date = formatShortDate(activity.created_at);
     if (!groupedActivities[date]) {
       groupedActivities[date] = [];
     }
@@ -155,7 +156,10 @@ export default function HistoryPage() {
                           )}
                         </div>
                         <p className="text-sm text-muted-foreground">
-                          {new Date(activity.created_at).toLocaleTimeString()}
+                          {new Date(activity.created_at).toLocaleTimeString([], { 
+                            hour: '2-digit', 
+                            minute: '2-digit' 
+                          })}
                         </p>
                       </div>
                     </div>
